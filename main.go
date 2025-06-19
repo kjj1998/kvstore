@@ -5,8 +5,11 @@ import (
 	"net"
 )
 
+var store = NewStore()
+
 func main() {
 	ln, err := net.Listen("tcp", ":8080")
+	fmt.Println("Server started and listening on port 8080...")
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 		return
@@ -19,6 +22,6 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, store)
 	}
 }

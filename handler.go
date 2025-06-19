@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, store *Store) {
 	defer conn.Close()
 
+handleLoop:
 	for {
 		reader := bufio.NewReader(conn)
 
@@ -18,12 +19,40 @@ func handleConnection(conn net.Conn) {
 			fmt.Println("Error reading from connection:", err)
 		}
 
-		if strings.TrimSpace(line) == "exit" {
-			fmt.Println("Client requested to exit.")
-			break
+		commands := strings.Fields(line)
+		if len(commands) == 0 {
+			fmt.Println("No commands received.")
+			continue
 		}
 
-		fmt.Printf("Received: %s", line)
-		fmt.Fprint(conn, "Message received\n")
+		switch commands[0] {
+		case "GET":
+			if len(commands) != 2 {
+				fmt.Fprint(conn, "GET command requires a key\n")
+			} else {
+				if value, exists := store.Get(commands[1]); exists {
+					fmt.Fprint(conn, value, "\n")
+				} else {
+					fmt.Fprint(conn, "NULL\n")
+				}
+			}
+		case "SET":
+			if len(commands) != 3 {
+				fmt.Fprint(conn, "SET command requires a key and a value\n")
+			} else {
+				store.Set(commands[1], commands[2])
+			}
+		case "DELETE":
+			if len(commands) != 2 {
+				fmt.Fprint(conn, "DELETE command requires a key\n")
+			} else {
+				store.Delete(commands[1])
+			}
+		case "EXIT":
+			break handleLoop
+		default:
+			fmt.Fprint(conn, "Unknown command\n")
+			fmt.Println("Unknown command received:", commands[0])
+		}
 	}
 }
