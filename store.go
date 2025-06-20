@@ -1,29 +1,39 @@
 package main
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Store struct {
-	kvStore map[string]string
+	kvStore map[string]Value
 	mutex   sync.RWMutex
 }
 
 func NewStore() *Store {
 	return &Store{
-		kvStore: make(map[string]string),
+		kvStore: make(map[string]Value),
 	}
 }
 
 func (s *Store) Get(key string) (string, bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
+
 	value, exists := s.kvStore[key]
-	return value, exists
+
+	if value.expiry.After(time.Now()) {
+		s.Delete(key)
+		return "", false
+	}
+
+	return value.val, exists
 }
 
 func (s *Store) Set(key, value string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.kvStore[key] = value
+	s.kvStore[key] = Value{val: value, expiry: time.Now().Add(2 * time.Minute)}
 }
 
 func (s *Store) Delete(key string) {
