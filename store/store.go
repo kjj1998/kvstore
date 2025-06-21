@@ -1,18 +1,20 @@
-package main
+package store
 
 import (
 	"sync"
 	"time"
+
+	"github.com/kjj1998/kvstore/models"
 )
 
 type Store struct {
-	kvStore map[string]Value
+	kvStore map[string]models.Value
 	mutex   sync.RWMutex
 }
 
 func NewStore() *Store {
 	return &Store{
-		kvStore: make(map[string]Value),
+		kvStore: make(map[string]models.Value),
 	}
 }
 
@@ -22,18 +24,18 @@ func (s *Store) Get(key string) (string, bool) {
 
 	value, exists := s.kvStore[key]
 
-	if value.expiry.After(time.Now()) {
+	if value.Expiry.After(time.Now()) {
 		s.Delete(key)
 		return "", false
 	}
 
-	return value.val, exists
+	return value.Value, exists
 }
 
 func (s *Store) Set(key, value string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.kvStore[key] = Value{val: value, expiry: time.Now().Add(2 * time.Minute)}
+	s.kvStore[key] = models.Value{Value: value, Expiry: time.Now().Add(-2 * time.Minute)}
 }
 
 func (s *Store) Delete(key string) {

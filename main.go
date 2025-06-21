@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"net"
+
+	"github.com/kjj1998/kvstore/handler"
+	"github.com/kjj1998/kvstore/store"
 )
 
-var store = NewStore()
+var kv = store.NewStore()
 
 func main() {
 	ln, err := net.Listen("tcp", ":8080")
@@ -22,6 +25,6 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn, store)
+		go handler.HandleConnection(conn, kv)
 	}
 }

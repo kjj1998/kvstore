@@ -1,13 +1,15 @@
-package main
+package handler
 
 import (
 	"bufio"
 	"fmt"
 	"net"
 	"strings"
+
+	"github.com/kjj1998/kvstore/store"
 )
 
-func handleConnection(conn net.Conn, store *Store) {
+func HandleConnection(conn net.Conn, store *store.Store) {
 	defer conn.Close()
 
 handleLoop:
