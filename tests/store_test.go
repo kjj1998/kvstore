@@ -10,8 +10,8 @@ import (
 func TestKvStoreGet(t *testing.T) {
 	store := StubStore{
 		kvStore: map[string]models.Value{
-			"hello":   {Value: "world", Expiry: expiryDate.Add(-time.Minute)},
-			"goodbye": {Value: "world", Expiry: expiryDate.Add(time.Minute)},
+			"hello":   {Value: "world", Expiry: CurrentTime.Add(1 * time.Minute)},
+			"goodbye": {Value: "world", Expiry: CurrentTime.Add(-1 * time.Minute)},
 		},
 	}
 
@@ -37,12 +37,12 @@ func TestKvStoreGet(t *testing.T) {
 func TestKvStoreSet(t *testing.T) {
 	store := StubStore{
 		kvStore: map[string]models.Value{
-			"hello": {Value: "world", Expiry: expiryDate.Add(-time.Minute)},
+			"hello": {Value: "world", Expiry: CurrentTime.Add(-time.Minute)},
 		},
 	}
 
 	t.Run("Set value in key-value store", func(t *testing.T) {
-		store.Set("hello", "world")
+		store.Set("hello", "world", 0)
 
 		got, _ := store.Get("hello")
 		want := "world"
@@ -51,11 +51,20 @@ func TestKvStoreSet(t *testing.T) {
 	})
 
 	t.Run("Override existing value in key-value store", func(t *testing.T) {
-		store.Set("hello", "world")
-		store.Set("hello", "earth")
+		store.Set("go", "is cool", 0)
+		store.Set("go", "is super cool", 0)
 
-		got, _ := store.Get("hello")
-		want := "earth"
+		got, _ := store.Get("go")
+		want := "is super cool"
+
+		AssertEquality(t, got, want)
+	})
+
+	t.Run("Set value in the key-value store with a time-to-live in seconds", func(t *testing.T) {
+		store.Set("set", "expiry", 30)
+
+		got, _ := store.Get("set")
+		want := "expiry"
 
 		AssertEquality(t, got, want)
 	})
@@ -64,7 +73,7 @@ func TestKvStoreSet(t *testing.T) {
 func TestKvStoreDelete(t *testing.T) {
 	store := StubStore{
 		kvStore: map[string]models.Value{
-			"hello": {Value: "world", Expiry: expiryDate.Add(-time.Minute)},
+			"hello": {Value: "world", Expiry: CurrentTime.Add(1 * time.Minute)},
 		},
 	}
 

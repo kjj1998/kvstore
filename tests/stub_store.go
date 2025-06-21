@@ -6,7 +6,7 @@ import (
 	"github.com/kjj1998/kvstore/models"
 )
 
-var expiryDate = time.Date(2025, time.June, 20, 15, 30, 0, 0, time.UTC)
+var CurrentTime = time.Date(2025, time.June, 20, 15, 30, 0, 0, time.UTC)
 
 type StubStore struct {
 	kvStore map[string]models.Value
@@ -15,7 +15,7 @@ type StubStore struct {
 func (s *StubStore) Get(key string) (string, bool) {
 	value, exists := s.kvStore[key]
 
-	if value.Expiry.After(expiryDate) {
+	if value.Expiry.Before(CurrentTime) {
 		s.Delete(key)
 		return "", false
 	}
@@ -23,10 +23,18 @@ func (s *StubStore) Get(key string) (string, bool) {
 	return value.Value, exists
 }
 
-func (s *StubStore) Set(key, value string) {
+func (s *StubStore) Set(key, value string, timeToLive int) {
+	var expiry = time.Time{}
+
+	if timeToLive == 0 {
+		expiry = CurrentTime.Add(2 * time.Minute)
+	} else {
+		expiry = CurrentTime.Add(time.Duration(timeToLive) * time.Second)
+	}
+
 	s.kvStore[key] = models.Value{
 		Value:  value,
-		Expiry: expiryDate.Add(-2 * time.Minute),
+		Expiry: expiry,
 	}
 }
 
