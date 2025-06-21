@@ -49,6 +49,16 @@ func TestKvStoreSet(t *testing.T) {
 
 		AssertEquality(t, got, want)
 	})
+
+	t.Run("Override existing value in key-value store", func(t *testing.T) {
+		store.Set("hello", "world")
+		store.Set("hello", "earth")
+
+		got, _ := store.Get("hello")
+		want := "earth"
+
+		AssertEquality(t, got, want)
+	})
 }
 
 func TestKvStoreDelete(t *testing.T) {
