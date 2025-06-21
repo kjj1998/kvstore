@@ -20,11 +20,12 @@ func NewStore() *Store {
 
 func (s *Store) Get(key string) (string, bool) {
 	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
 	value, exists := s.kvStore[key]
 
-	if value.Expiry.After(time.Now()) {
+	expired := exists && !value.Expiry.IsZero() && value.Expiry.Before(time.Now())
+	s.mutex.RUnlock()
+
+	if expired {
 		s.Delete(key)
 		return "", false
 	}
@@ -32,10 +33,22 @@ func (s *Store) Get(key string) (string, bool) {
 	return value.Value, exists
 }
 
-func (s *Store) Set(key, value string) {
+func (s *Store) Set(key, value string, timeToLive int) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.kvStore[key] = models.Value{Value: value, Expiry: time.Now().Add(-2 * time.Minute)}
+
+	var expiry = time.Time{}
+
+	if timeToLive == 0 {
+		expiry = time.Time{}
+	} else {
+		expiry = time.Now().Add(time.Duration(timeToLive) * time.Second)
+	}
+
+	s.kvStore[key] = models.Value{
+		Value:  value,
+		Expiry: expiry,
+	}
 }
 
 func (s *Store) Delete(key string) {

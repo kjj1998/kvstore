@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/kjj1998/kvstore/store"
@@ -32,17 +33,27 @@ handleLoop:
 			if len(commands) != 2 {
 				fmt.Fprint(conn, "GET command requires a key\n")
 			} else {
-				if value, exists := store.Get(commands[1]); exists {
+				value, exists := store.Get(commands[1])
+
+				if exists {
 					fmt.Fprint(conn, value, "\n")
 				} else {
 					fmt.Fprint(conn, "NULL\n")
 				}
 			}
 		case "SET":
-			if len(commands) != 3 {
+			if len(commands) < 3 {
 				fmt.Fprint(conn, "SET command requires a key and a value\n")
+			} else if len(commands) == 5 {
+				timeToLive, err := strconv.Atoi(commands[4])
+
+				if commands[3] != "EX" || err != nil {
+					fmt.Fprint(conn, "To set values with a time to live expiry, enter command in the format SET <key> <value> EX <integer>\n")
+				}
+
+				store.Set(commands[1], commands[2], timeToLive)
 			} else {
-				store.Set(commands[1], commands[2])
+				store.Set(commands[1], commands[2], 0)
 			}
 		case "DELETE":
 			if len(commands) != 2 {
