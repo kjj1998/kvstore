@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kjj1998/kvstore/errors"
 	"github.com/kjj1998/kvstore/store"
 )
 
@@ -16,11 +17,8 @@ func HandleConnection(conn net.Conn, store *store.Store) {
 handleLoop:
 	for {
 		reader := bufio.NewReader(conn)
-
 		line, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Error reading from connection:", err)
-		}
+		errors.LogError(err, "Error reading from connection: ")
 
 		commands := strings.Fields(line)
 		if len(commands) == 0 {
@@ -50,9 +48,9 @@ handleLoop:
 			} else {
 				store.Set(commands[1], commands[2], 0)
 			}
-		case "DELETE":
+		case "DEL":
 			if len(commands) != 2 {
-				fmt.Fprint(conn, "DELETE command requires a key\n")
+				fmt.Fprint(conn, "DEL command requires a key\n")
 			} else {
 				store.Delete(commands[1])
 			}
