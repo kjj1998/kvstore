@@ -33,13 +33,8 @@ handleLoop:
 			if len(commands) != 2 {
 				fmt.Fprint(conn, "GET command requires a key\n")
 			} else {
-				value, exists := store.Get(commands[1])
-
-				if exists {
-					fmt.Fprint(conn, value, "\n")
-				} else {
-					fmt.Fprint(conn, "NULL\n")
-				}
+				value := store.Get(commands[1])
+				fmt.Fprint(conn, value, "\n")
 			}
 		case "SET":
 			if len(commands) < 3 {

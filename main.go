@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/kjj1998/kvstore/handler"
 	"github.com/kjj1998/kvstore/store"
@@ -17,6 +18,9 @@ func main() {
 		fmt.Println("Error starting server:", err)
 		return
 	}
+
+	stop := make(chan struct{})
+	kv.BackgroundCleanUpService(30*time.Second, stop)
 
 	for {
 		conn, err := ln.Accept()

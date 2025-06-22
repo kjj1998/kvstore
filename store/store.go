@@ -18,7 +18,7 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) Get(key string) (string, bool) {
+func (s *Store) Get(key string) string {
 	s.mutex.RLock()
 	value, exists := s.kvStore[key]
 
@@ -27,10 +27,14 @@ func (s *Store) Get(key string) (string, bool) {
 
 	if expired {
 		s.Delete(key)
-		return "", false
+		return "EXPIRED"
 	}
 
-	return value.Value, exists
+	if !exists {
+		return "NULL"
+	}
+
+	return value.Value
 }
 
 func (s *Store) Set(key, value string, timeToLive int) {
@@ -55,4 +59,39 @@ func (s *Store) Delete(key string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	delete(s.kvStore, key)
+}
+
+func (s *Store) CleanUpExpiredKeys() {
+	now := time.Now()
+	var expiredKeys []string
+
+	s.mutex.RLock()
+	for key, value := range s.kvStore {
+		if !value.Expiry.IsZero() && value.Expiry.Before(now) {
+			expiredKeys = append(expiredKeys, key)
+		}
+	}
+	s.mutex.RUnlock()
+
+	s.mutex.Lock()
+	for _, key := range expiredKeys {
+		delete(s.kvStore, key)
+	}
+	s.mutex.Unlock()
+}
+
+func (s *Store) BackgroundCleanUpService(interval time.Duration, stop <-chan struct{}) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				s.CleanUpExpiredKeys()
+			case <-stop:
+				return
+			}
+		}
+	}()
 }
