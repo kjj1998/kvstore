@@ -12,15 +12,21 @@ type StubStore struct {
 	kvStore map[string]models.Value
 }
 
-func (s *StubStore) Get(key string) (string, bool) {
+func (s *StubStore) Get(key string) string {
 	value, exists := s.kvStore[key]
 
-	if value.Expiry.Before(CurrentTime) {
+	expired := exists && !value.Expiry.IsZero() && value.Expiry.Before(CurrentTime)
+
+	if expired {
 		s.Delete(key)
-		return "", false
+		return "EXPIRED"
 	}
 
-	return value.Value, exists
+	if !exists {
+		return "NULL"
+	}
+
+	return value.Value
 }
 
 func (s *StubStore) Set(key, value string, timeToLive int) {

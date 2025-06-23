@@ -16,19 +16,15 @@ func TestKvStoreGet(t *testing.T) {
 	}
 
 	t.Run("Get fresh value from the key-value store", func(t *testing.T) {
-		got, _ := store.Get("hello")
+		got := store.Get("hello")
 		want := "world"
 
 		AssertEquality(t, got, want)
 	})
 
 	t.Run("Get expired value from the key-value store", func(t *testing.T) {
-		got, exists := store.Get("goodbye")
-		want := ""
-
-		if exists {
-			t.Errorf("value exists, expected value to not exist\n")
-		}
+		got := store.Get("goodbye")
+		want := "EXPIRED"
 
 		AssertEquality(t, got, want)
 	})
@@ -44,7 +40,7 @@ func TestKvStoreSet(t *testing.T) {
 	t.Run("Set value in key-value store", func(t *testing.T) {
 		store.Set("hello", "world", 0)
 
-		got, _ := store.Get("hello")
+		got := store.Get("hello")
 		want := "world"
 
 		AssertEquality(t, got, want)
@@ -54,7 +50,7 @@ func TestKvStoreSet(t *testing.T) {
 		store.Set("go", "is cool", 0)
 		store.Set("go", "is super cool", 0)
 
-		got, _ := store.Get("go")
+		got := store.Get("go")
 		want := "is super cool"
 
 		AssertEquality(t, got, want)
@@ -63,7 +59,7 @@ func TestKvStoreSet(t *testing.T) {
 	t.Run("Set value in the key-value store with a time-to-live in seconds", func(t *testing.T) {
 		store.Set("set", "expiry", 30)
 
-		got, _ := store.Get("set")
+		got := store.Get("set")
 		want := "expiry"
 
 		AssertEquality(t, got, want)
@@ -80,12 +76,9 @@ func TestKvStoreDelete(t *testing.T) {
 	t.Run("Delete value stored in key-value store", func(t *testing.T) {
 		store.Delete("hello")
 
-		got, exists := store.Get("hello")
-		want := ""
+		got := store.Get("hello")
+		want := "NULL"
 
-		if exists {
-			t.Errorf("value exists, expected value to not exist\n")
-		}
 		AssertEquality(t, got, want)
 	})
 }
